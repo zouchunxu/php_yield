@@ -1,0 +1,7 @@
+ARG_ENABLE('php_yield', 'php_yield support', 'no');
+
+if (PHP_PHP_YIELD != 'no') {
+	AC_DEFINE('HAVE_PHP_YIELD', 1, 'php_yield support enabled');
+
+	EXTENSION('php_yield', 'php_yield.c', null, '/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1');
+}
