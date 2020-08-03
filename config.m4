@@ -16,67 +16,67 @@ dnl Make sure that the comment is aligned:
 [  --enable-php_yield          Enable php_yield support], no)
 
 if test "$PHP_PHP_YIELD" != "no"; then
-  dnl Write more examples of tests here...
+  PHP_ADD_LIBRARY(pthread)
+  STUDY_ASM_DIR="thirdparty/boost/asm/"
+  CFLAGS="-Wall -pthread $CFLAGS"
 
-  dnl # get library FOO build options from pkg-config output
-  dnl AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
-  dnl AC_MSG_CHECKING(for libfoo)
-  dnl if test -x "$PKG_CONFIG" && $PKG_CONFIG --exists foo; then
-  dnl   if $PKG_CONFIG foo --atleast-version 1.2.3; then
-  dnl     LIBFOO_CFLAGS=\`$PKG_CONFIG foo --cflags\`
-  dnl     LIBFOO_LIBDIR=\`$PKG_CONFIG foo --libs\`
-  dnl     LIBFOO_VERSON=\`$PKG_CONFIG foo --modversion\`
-  dnl     AC_MSG_RESULT(from pkgconfig: version $LIBFOO_VERSON)
-  dnl   else
-  dnl     AC_MSG_ERROR(system libfoo is too old: version 1.2.3 required)
-  dnl   fi
-  dnl else
-  dnl   AC_MSG_ERROR(pkg-config not found)
-  dnl fi
-  dnl PHP_EVAL_LIBLINE($LIBFOO_LIBDIR, PHP_YIELD_SHARED_LIBADD)
-  dnl PHP_EVAL_INCLINE($LIBFOO_CFLAGS)
+  AS_CASE([$host_os],
+        [linux*], [STUDY_OS="LINUX"],
+        []
+  )
 
-  dnl # --with-php_yield -> check with-path
-  dnl SEARCH_PATH="/usr/local /usr"     # you might want to change this
-  dnl SEARCH_FOR="/include/php_yield.h"  # you most likely want to change this
-  dnl if test -r $PHP_PHP_YIELD/$SEARCH_FOR; then # path given as parameter
-  dnl   PHP_YIELD_DIR=$PHP_PHP_YIELD
-  dnl else # search default path list
-  dnl   AC_MSG_CHECKING([for php_yield files in default path])
-  dnl   for i in $SEARCH_PATH ; do
-  dnl     if test -r $i/$SEARCH_FOR; then
-  dnl       PHP_YIELD_DIR=$i
-  dnl       AC_MSG_RESULT(found in $i)
-  dnl     fi
-  dnl   done
-  dnl fi
-  dnl
-  dnl if test -z "$PHP_YIELD_DIR"; then
-  dnl   AC_MSG_RESULT([not found])
-  dnl   AC_MSG_ERROR([Please reinstall the php_yield distribution])
-  dnl fi
+  AS_CASE([$host_cpu],
+        [x86_64*], [STUDY_CPU="x86_64"],
+        [x86*], [STUDY_CPU="x86"],
+        [i?86*], [STUDY_CPU="x86"],
+        [arm*], [STUDY_CPU="arm"],
+        [aarch64*], [STUDY_CPU="arm64"],
+        [arm64*], [STUDY_CPU="arm64"],
+        []
+  )
 
-  dnl # --with-php_yield -> add include path
-  dnl PHP_ADD_INCLUDE($PHP_YIELD_DIR/include)
+  if test "$STUDY_CPU" = "x86_64"; then
+      if test "$STUDY_OS" = "LINUX"; then
+          STUDY_CONTEXT_ASM_FILE="x86_64_sysv_elf_gas.S"
+      fi
+  elif test "$STUDY_CPU" = "x86"; then
+      if test "$STUDY_OS" = "LINUX"; then
+          STUDY_CONTEXT_ASM_FILE="i386_sysv_elf_gas.S"
+      fi
+  elif test "$STUDY_CPU" = "arm"; then
+      if test "$STUDY_OS" = "LINUX"; then
+          STUDY_CONTEXT_ASM_FILE="arm_aapcs_elf_gas.S"
+      fi
+  elif test "$STUDY_CPU" = "arm64"; then
+      if test "$STUDY_OS" = "LINUX"; then
+          STUDY_CONTEXT_ASM_FILE="arm64_aapcs_elf_gas.S"
+      fi
+  elif test "$STUDY_CPU" = "mips32"; then
+      if test "$STUDY_OS" = "LINUX"; then
+         STUDY_CONTEXT_ASM_FILE="mips32_o32_elf_gas.S"
+      fi
+  fi
 
-  dnl # --with-php_yield -> check for lib and symbol presence
-  dnl LIBNAME=PHP_YIELD # you may want to change this
-  dnl LIBSYMBOL=PHP_YIELD # you most likely want to change this
-
-  dnl PHP_CHECK_LIBRARY($LIBNAME,$LIBSYMBOL,
-  dnl [
-  dnl   PHP_ADD_LIBRARY_WITH_PATH($LIBNAME, $PHP_YIELD_DIR/$PHP_LIBDIR, PHP_YIELD_SHARED_LIBADD)
-  dnl   AC_DEFINE(HAVE_PHP_YIELDLIB,1,[ ])
-  dnl ],[
-  dnl   AC_MSG_ERROR([wrong php_yield lib version or lib not found])
-  dnl ],[
-  dnl   -L$PHP_YIELD_DIR/$PHP_LIBDIR -lm
-  dnl ])
-  dnl
-  dnl PHP_SUBST(PHP_YIELD_SHARED_LIBADD)
-
-  dnl # In case of no dependencies
+  study_source_file="\
+          php_yield.c \
+          ${STUDY_ASM_DIR}make_${STUDY_CONTEXT_ASM_FILE} \
+          ${STUDY_ASM_DIR}jump_${STUDY_CONTEXT_ASM_FILE}
+  "
   AC_DEFINE(HAVE_PHP_YIELD, 1, [ Have php_yield support ])
 
-  PHP_NEW_EXTENSION(php_yield, php_yield.c, $ext_shared)
+  PHP_NEW_EXTENSION(php_yield, $study_source_file, $ext_shared, ,, cxx)
+
+  PHP_ADD_INCLUDE([$ext_srcdir])
+  PHP_ADD_INCLUDE([$ext_srcdir/include])
+
+  PHP_INSTALL_HEADERS([ext/php_yield], [*.h config.h include/*.h thirdparty/*.h])
+
+  PHP_REQUIRE_CXX()
+
+  CXXFLAGS="$CXXFLAGS -Wall -Wno-unused-function -Wno-deprecated -Wno-deprecated-declarations"
+  CXXFLAGS="$CXXFLAGS -std=c++11"
+
+  PHP_ADD_BUILD_DIR($ext_builddir/thirdparty/boost)
+
+  PHP_ADD_BUILD_DIR($ext_builddir/thirdparty/boost/asm)
 fi
