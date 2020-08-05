@@ -58,7 +58,7 @@ if test "$PHP_PHP_YIELD" != "no"; then
   fi
 
   study_source_file="\
-          php_yield.c \
+          php_yield.cc \
           ${STUDY_ASM_DIR}make_${STUDY_CONTEXT_ASM_FILE} \
           ${STUDY_ASM_DIR}jump_${STUDY_CONTEXT_ASM_FILE}
   "
