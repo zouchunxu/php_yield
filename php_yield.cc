@@ -18,6 +18,7 @@
 #endif
 
 PHP_MINIT_FUNCTION (php_yield) {
+    study_coroutine_util_init();
     php_printf("MINIT\n");
     return SUCCESS;
 }

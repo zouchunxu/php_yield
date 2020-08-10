@@ -34,6 +34,8 @@ ZEND_BEGIN_MODULE_GLOBALS(php_yield)
 ZEND_END_MODULE_GLOBALS(php_yield)
 
 
+void study_coroutine_util_init();
+
 # if defined(ZTS) && defined(COMPILE_DL_PHP_YIELD)
 ZEND_TSRMLS_CACHE_EXTERN()
 # endif
